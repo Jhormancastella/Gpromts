@@ -324,9 +324,4 @@
       'parque urbano en otoño, hojas doradas arremolinándose, bancos con luz cálida, atardecer suave, calma'
     ]
   );
-
-  const bgFlat = D.backgroundPresets.reduce((acc, g) => acc.concat(g.options), []);
-  if (bgFlat.length !== 32) {
-    console.warn('GPROMTS: número de fondos no coincide con traducciones ES.');
-  }
 })();

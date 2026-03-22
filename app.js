@@ -54,11 +54,8 @@
       output_hint: 'Selecciona las opciones y presiona "Generar Prompt"...',
       copy_btn: 'Copiar',
       negative_label: 'NEGATIVO:',
-      translate_tip_btn: '🌐 Traducir para más precisión',
-      translate_tip_title: '¿Traducir el prompt al inglés?',
       translate_tip_body:
-        'El prompt ya se genera en español cuando la web está en español. Si tu herramienta de IA da mejores resultados en inglés, copia el texto, tradúcelo (DeepL, Google Translate, etc.) y pégalo en el generador.',
-      translate_tip_close: 'Entendido'
+        'El prompt ya se genera en español cuando la web está en español. Si tu herramienta de IA da mejores resultados en inglés, copia el texto, tradúcelo (DeepL, Google Translate, etc.) y pégalo en el generador.'
     },
     en: {
       slogan: 'Master AI, don’t wrestle with it. Precise prompts for epic results.',
@@ -103,17 +100,11 @@
       output_hint: 'Choose options and press “Generate Prompt”...',
       copy_btn: 'Copy',
       negative_label: 'NEGATIVE:',
-      translate_tip_btn: '🌐 Translate for precision',
-      translate_tip_title: 'Translate your prompt for best results',
       translate_tip_body:
-        'Many image models respond best to English prompts. Copy the generated text, translate it with DeepL, Google Translate, or similar, then paste it into your generator for more predictable results.',
-      translate_tip_close: 'Got it'
+        'Many image models respond best to English prompts. Copy the generated text, translate it with DeepL, Google Translate, or similar, then paste it into your generator for more predictable results.'
     }
   };
 
-  let translateModalPreviousFocus = null;
-
-  /** Textos del prompt generado según idioma (valores de data.js se resuelven con valueEs). */
   const PROMPT = {
     es: {
       subject_keep:
@@ -153,6 +144,14 @@
     }
   };
 
+  function getPromptBundle() {
+    return PROMPT[state.lang] || PROMPT.en;
+  }
+
+  function getLabels() {
+    return I18N[state.lang] || I18N.es;
+  }
+
   function promptValue(opt) {
     if (!opt || typeof opt.value === 'undefined') return '';
     if (state.lang === 'es' && 'valueEs' in opt) {
@@ -190,7 +189,7 @@
   }
 
   function buildPrompt() {
-    const P = PROMPT[state.lang] || PROMPT.en;
+    const P = getPromptBundle();
     const parts = [];
 
     const subjectMode = $('input[name="subject"]:checked').value;
@@ -290,10 +289,10 @@
     const negOutput = $('#negativeOutput');
     const neg = buildNegative(platform);
     if (neg) {
-      negOutput.style.display = 'block';
-      negOutput.textContent = I18N[state.lang].negative_label + '\n' + neg;
+      negOutput.hidden = false;
+      negOutput.textContent = getLabels().negative_label + '\n' + neg;
     } else {
-      negOutput.style.display = 'none';
+      negOutput.hidden = true;
       negOutput.textContent = '';
     }
 
@@ -312,7 +311,7 @@
       btn.textContent = state.lang === 'es' ? '¡Copiado!' : 'Copied!';
       btn.classList.add('copied');
       setTimeout(() => {
-        btn.textContent = I18N[state.lang].copy_btn;
+        btn.textContent = getLabels().copy_btn;
         btn.classList.remove('copied');
       }, 2000);
     });
@@ -341,8 +340,9 @@
         $('#promptOutput').textContent = parsed.lastPrompt;
       }
       if (parsed && parsed.lastNegative) {
-        $('#negativeOutput').textContent = parsed.lastNegative;
-        $('#negativeOutput').style.display = parsed.lastNegative ? 'block' : 'none';
+        const negEl = $('#negativeOutput');
+        negEl.textContent = parsed.lastNegative;
+        negEl.hidden = false;
       }
     } catch (_) {
       // Ignore corrupt localStorage
@@ -483,6 +483,8 @@
   function enableCompactSelects() {
     const maxVisible = 5;
     $$('.compact-select').forEach((selectEl) => {
+      if (selectEl.dataset.compactBound === '1') return;
+      selectEl.dataset.compactBound = '1';
       selectEl.size = 1;
 
       selectEl.addEventListener('mousedown', (e) => {
@@ -507,7 +509,7 @@
   }
 
   function applyI18n() {
-    const dict = I18N[state.lang] || I18N.es;
+    const dict = getLabels();
     $$('[data-i18n]').forEach((el) => {
       const key = el.getAttribute('data-i18n');
       if (dict[key]) el.textContent = dict[key];
@@ -516,47 +518,8 @@
       const key = el.getAttribute('data-i18n-placeholder');
       if (dict[key]) el.setAttribute('placeholder', dict[key]);
     });
-    const tipBtn = $('#translateTipBtn');
-    if (tipBtn) tipBtn.hidden = state.lang !== 'es';
-  }
-
-  function openTranslateModal() {
-    const modal = $('#translateTipModal');
-    if (!modal || !modal.hasAttribute('hidden')) return;
-    translateModalPreviousFocus = document.activeElement;
-    modal.removeAttribute('hidden');
-    document.body.style.overflow = 'hidden';
-    const closeBtn = $('#translateTipCloseBtn');
-    if (closeBtn) closeBtn.focus();
-  }
-
-  function closeTranslateModal() {
-    const modal = $('#translateTipModal');
-    if (!modal || modal.hasAttribute('hidden')) return;
-    modal.setAttribute('hidden', '');
-    document.body.style.overflow = '';
-    if (translateModalPreviousFocus && typeof translateModalPreviousFocus.focus === 'function') {
-      translateModalPreviousFocus.focus();
-    }
-    translateModalPreviousFocus = null;
-  }
-
-  function bindTranslateTipModal() {
-    const btn = $('#translateTipBtn');
-    const modal = $('#translateTipModal');
-    if (!btn || !modal) return;
-
-    btn.addEventListener('click', () => openTranslateModal());
-
-    modal.querySelectorAll('[data-close-modal]').forEach((el) => {
-      el.addEventListener('click', () => closeTranslateModal());
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !modal.hasAttribute('hidden')) {
-        closeTranslateModal();
-      }
-    });
+    const tipInline = $('#translateTipInline');
+    if (tipInline) tipInline.hidden = state.lang !== 'es';
   }
 
   function setActiveToggle(selector, value, attr) {
@@ -573,9 +536,7 @@
         localStorage.setItem('gpromts:lang', state.lang);
         setActiveToggle('[data-lang]', state.lang, 'data-lang');
         applyI18n();
-        closeTranslateModal();
         hydrateFromData();
-        enableCompactSelects();
       });
     });
   }
@@ -587,7 +548,6 @@
         localStorage.setItem('gpromts:mode', state.mode);
         setActiveToggle('[data-mode]', state.mode, 'data-mode');
         hydrateFromData();
-        enableCompactSelects();
       });
     });
   }
@@ -599,7 +559,7 @@
     setActiveToggle('[data-theme]', theme, 'data-theme');
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', theme === 'light' ? '#f5f6fb' : '#0f0f1a');
+      meta.setAttribute('content', theme === 'light' ? '#f4f6fa' : '#0f0f1a');
     }
   }
 
@@ -619,7 +579,6 @@
     bindLanguageToggle();
     bindModeToggle();
     bindThemeToggle();
-    bindTranslateTipModal();
   }
 
   function init() {
