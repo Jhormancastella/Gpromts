@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 # Mapa del sitio para Google y otros buscadores (Search Console → Sitemaps)
-Sitemap: https://jhormancastella.github.io/Gpromts/sitemap.xml
+Sitemap: https://jhormancastella.github.io/GenPrompts/sitemap.xml

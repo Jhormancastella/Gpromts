@@ -298,7 +298,7 @@
 
     state.lastPrompt = $('#promptOutput').textContent;
     state.lastNegative = negOutput.textContent;
-    localStorage.setItem('gpromts:last', JSON.stringify(state));
+    localStorage.setItem('GenPrompts:last', JSON.stringify(state));
   }
 
   function copyPrompt() {
@@ -318,7 +318,7 @@
   }
 
   function setupCollapse() {
-    $$('.section').forEach((section) => {
+    $('.section').forEach((section) => {
       const header = section.querySelector('.section-header');
       const content = section.querySelector('.section-content');
       const arrow = section.querySelector('.toggle-arrow');
@@ -331,8 +331,24 @@
     });
   }
 
+  function setupAutoHideHeader() {
+    let lastScroll = 0;
+    const header = $('header');
+    if (!header) return;
+
+    window.addEventListener('scroll', () => {
+      const currentScroll = window.pageYOffset;
+      if (currentScroll > 50 && currentScroll > lastScroll) {
+        header.classList.add('header-hidden');
+      } else {
+        header.classList.remove('header-hidden');
+      }
+      lastScroll = currentScroll;
+    }, { passive: true });
+  }
+
   function restoreState() {
-    const saved = localStorage.getItem('gpromts:last');
+    const saved = localStorage.getItem('GenPrompts:last');
     if (!saved) return;
     try {
       const parsed = JSON.parse(saved);
@@ -533,7 +549,7 @@
     $$('[data-lang]').forEach((btn) => {
       btn.addEventListener('click', () => {
         state.lang = btn.getAttribute('data-lang');
-        localStorage.setItem('gpromts:lang', state.lang);
+        localStorage.setItem('GenPrompts:lang', state.lang);
         setActiveToggle('[data-lang]', state.lang, 'data-lang');
         applyI18n();
         hydrateFromData();
@@ -545,7 +561,7 @@
     $$('[data-mode]').forEach((btn) => {
       btn.addEventListener('click', () => {
         state.mode = btn.getAttribute('data-mode');
-        localStorage.setItem('gpromts:mode', state.mode);
+        localStorage.setItem('GenPrompts:mode', state.mode);
         setActiveToggle('[data-mode]', state.mode, 'data-mode');
         hydrateFromData();
       });
@@ -555,7 +571,7 @@
   function setTheme(theme) {
     state.theme = theme;
     document.body.setAttribute('data-theme', theme);
-    localStorage.setItem('gpromts:theme', theme);
+    localStorage.setItem('GenPrompts:theme', theme);
     setActiveToggle('[data-theme]', theme, 'data-theme');
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
@@ -582,9 +598,9 @@
   }
 
   function init() {
-    const savedLang = localStorage.getItem('gpromts:lang');
-    const savedMode = localStorage.getItem('gpromts:mode');
-    const savedTheme = localStorage.getItem('gpromts:theme');
+    const savedLang = localStorage.getItem('GenPrompts:lang');
+    const savedMode = localStorage.getItem('GenPrompts:mode');
+    const savedTheme = localStorage.getItem('GenPrompts:theme');
     if (savedLang) state.lang = savedLang;
     if (savedMode) state.mode = savedMode;
     if (savedTheme) state.theme = savedTheme;
@@ -601,6 +617,7 @@
     setupCollapse();
     restoreState();
     bindEvents();
+    setupAutoHideHeader();
   }
 
   document.addEventListener('DOMContentLoaded', init);
